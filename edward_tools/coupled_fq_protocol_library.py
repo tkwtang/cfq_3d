@@ -22,7 +22,7 @@ def create_simple_protocol_parameter_dict(protocol_array):
     result_dict["t"] = [0, 1]
     return result_dict
 
-def create_system(protocol_parameter_dict, domain = None, modifiedFunction = None):
+def create_system(protocol_parameter_dict, protocol_key, domain = None, modifiedFunction = None):
     """
     This function is used to produce the storage and computation protocol
 
@@ -35,7 +35,7 @@ def create_system(protocol_parameter_dict, domain = None, modifiedFunction = Non
     2. modifiedFunction:
     - To modify the simple linear parametrization of the value
     - You can use more complex method to get the values such as calculate the value of phi_1x based on the value of other parameters
-    
+
     output:
     1. comp_prototocl: the protocol for the computation system
     2. storage_protocol: : the protocol for the equilibrium system
@@ -52,17 +52,17 @@ def create_system(protocol_parameter_dict, domain = None, modifiedFunction = Non
     comp_protocol_parameter_time_series = [protocol_parameter_dict[key] for key in protocol_key]
     comp_protocol_parameter_time_series = np.array(comp_protocol_parameter_time_series).T
 
-    
+
     if modifiedFunction == None:
         modifiedFunction = [None for _ in range(len(comp_t)-1)]
-    
-    print(modifiedFunction)
-    
+
+    # print(modifiedFunction)
+
     for i in range(len(comp_t)-1):
         n_th_comp_time_array = (comp_t[i], comp_t[i+1])
         n_th_comp_protocol_parameter_array = np.array([comp_protocol_parameter_time_series[i], comp_protocol_parameter_time_series[i+1]]).T # in the form of array of [(p_n_i, p_n_f)]
         _p = Protocol(n_th_comp_time_array, n_th_comp_protocol_parameter_array)
-        
+
         _p.modifiedFunction = modifiedFunction[i]
         comp_protocol_array.append(_p)
     comp_protocol = Compound_Protocol(comp_protocol_array)
@@ -116,10 +116,7 @@ def create_system_from_storage_and_computation_protocol(storage_protocol_paramet
 
     return storage_protocol, comp_protocol
 
-def customizedProtocol(initial_values_dict, protocol_list, normalized = False):
-    protocol_key_array = ['U0_1', 'U0_2', 'gamma_1', 'gamma_2', 'beta_1', 'beta_2', 'd_beta_1', \
-                    'd_beta_2', 'phi_1_x', 'phi_2_x', 'phi_1_dcx', 'phi_2_dcx', 'M_12', 'x_c']
-
+def customizedProtocol(initial_values_dict, protocol_list, protocol_key_array, normalized = False):
     protocol_parameter_dict = {key: [value] for key, value in initial_values_dict.items()}
     protocol_parameter_dict["t"] = [0.0]
 
@@ -351,13 +348,13 @@ def get_potential_along_a_1D_cutline_by_overriding_parameters(simRunner, paramet
                           'beta_1': 2.3, 'beta_2': 2.3, 'd_beta_1': 0.0, 'd_beta_2': 0.0,
                           'phi_1_x': 0, 'phi_2_x': 0, 'phi_1_dcx': 0, 'phi_2_dcx': 0, 'M_12': 0,
                           'x_c': 3.291059784019349e-16}
-    
-    
+
+
     slice_values = [0, 0, parameter_data["phi_1_dcx"], parameter_data["phi_2_dcx"]]
-    
+
     modified_manual_domain = [(manual_domain[0][1], manual_domain[0][0]), \
                               (manual_domain[1][1], manual_domain[1][0])]
-    
+
     U, X_mesh = simRunner.system.lattice(0, resolution, axes=(0, 1), manual_domain=modified_manual_domain, slice_values = slice_values, override_params = parameter_data.values())
     X, Y = X_mesh[0], X_mesh[1]
     vmin, vmax = np.min(U), np.max(U)
@@ -399,7 +396,7 @@ def get_potential_along_a_1D_cutline_by_overriding_parameters(simRunner, paramet
 def plotCutlines(X, Y, U, cutlineDirection = "v", cutlineValue = 0, cutlineColor = 'red', cutline_label = None, x_range = None, y_range = None, contour_range = [0, 400], contour_plt = plt, cutline_plt = plt, contours = 5, time = None, graph_title = None, cmap = "afmhot", cutlineYLimit = None, offset_potential = False, dynamicCutline = False, showGraph = None, saveGraph = None):
     """
     This function is used to plot the contour plot and the cutline after the function get_potential_along_a_1D_cutline is called.
-    
+
     X = all the rows of the mesh
     Y = all the columns of the mesh
 
@@ -408,28 +405,28 @@ def plotCutlines(X, Y, U, cutlineDirection = "v", cutlineValue = 0, cutlineColor
     for example, cutlineDirection = 'v' and cutlineValue = '3' mean the cutline is x = 3.
 
     dynamicCutline: to set the color of the cutline = None so that they will not show up in the graph, we use another line to represent this line.
-    
+
     resolution: resolution of the contour plot
-    
+
     _plotAxis: the x axis in the potential vs coord graph
     _plotU: the y axis in the potential vs coord graph
-    
+
     _targetAxis: the target value of the graph
     """
     if cutlineDirection == "h":
         _plotAxis = X
         _plotU = U
-        
+
         _targetAxis = Y
-        
+
 
     if cutlineDirection == "v":
         _plotAxis = Y.T
         _plotU = U.T
-        
+
         _targetAxis = X.T
-        
-        
+
+
 
     plotAxis = _plotAxis[0]
 
@@ -438,7 +435,7 @@ def plotCutlines(X, Y, U, cutlineDirection = "v", cutlineValue = 0, cutlineColor
     targetRange = (targetAxis[-1] - targetAxis[-2])/2
     targetIndex = np.where(np.abs(targetAxis - cutlineValue) <= targetRange)[0][0]
     targetU = _plotU[targetIndex]
-    
+
     min_U = np.min(targetU)
     if offset_potential:
         targetU = targetU - min_U
@@ -454,28 +451,28 @@ def plotCutlines(X, Y, U, cutlineDirection = "v", cutlineValue = 0, cutlineColor
 
     if x_range:
         cutline_plt.set_xlim(x_range)
-    
+
     if y_range:
         cutline_plt.set_ylim(y_range)
-        
+
     if cutlineYLimit:
         cutline_plt.set_ylim(cutlineYLimit[0], cutlineYLimit[1])
-        
-        
+
+
         # cont = contour_plt.contourf(X, Y, U,  contours)
     cont = contour_plt.contourf(X, Y, U, 40, vmin = contour_range[0], vmax = contour_range[1], cmap = "afmhot")
 
-    cutlineColor = cutlineColor if not dynamicCutline else "None" 
-    
+    cutlineColor = cutlineColor if not dynamicCutline else "None"
+
     if cutlineDirection == "h":
         _line = contour_plt.plot([np.min(_plotAxis), np.max(_plotAxis)], [_targetAxis[targetIndex], _targetAxis[targetIndex]],  color= cutlineColor,  linewidth = 1)
-        
+
     if cutlineDirection == "v":
         _line = contour_plt.plot([_targetAxis[targetIndex], _targetAxis[targetIndex]], [np.min(_plotAxis), np.max(_plotAxis)],  color= cutlineColor,  linewidth = 1)
-    
+
     if saveGraph:
         plt.savefig(f"coupled_flux_qubit_protocol/coupled_flux_qubit_data_gallery/{uuid.uuid4().hex}_plotline_graph.png")
-        
+
     if not showGraph:
         plt.close()
 
@@ -494,14 +491,14 @@ def get_contour_and_cutline_data_with_given_params(simRunner, params_dict, cutli
     phi_1_dc_i = params_dict["phi_1_dcx"]
     phi_2_dc_i = params_dict["phi_2_dcx"]
     slice_values = [0, 0, phi_1_dc_i, phi_2_dc_i]
-    
+
      # Call the system lattice methods, this will return (1) the potential energy at each grid point,
     # (2) the grid in the format of X = [[row1], [row2], [row3], ...] and
     # Y = [[column1], [column2], [column3], ...]. The axis parameter tells which axes do we want to
     # use as the x and y .
     modified_manual_domain = [(manual_domain[0][1], manual_domain[0][0]), \
                               (manual_domain[1][1], manual_domain[1][0])]
-    
+
     resolution = contourData["resolution"]
     U, X_mesh = simRunner.system.lattice(0, resolution, axes=(0, 1),\
                                 manual_domain=modified_manual_domain, slice_values = slice_values, override_params = params_dict.values())
@@ -511,7 +508,7 @@ def get_contour_and_cutline_data_with_given_params(simRunner, params_dict, cutli
     vmin, vmax = np.min(U), np.max(U)
     x_min, x_max = np.min(X), np.max(X)
     y_min, y_max = np.min(Y), np.max(Y)
-    
+
      # 6. call the plot cutline function
     # plotAxis = the axis that we want to be the variable , targetAxis means to fixed the value of that axis
     if cutlineData["cutlineDirection"] == "h":
@@ -535,14 +532,14 @@ def get_contour_and_cutline_data_with_given_params(simRunner, params_dict, cutli
     # I cannot find the index of 0.04 because it does not exist in the array
     # The best I can do is to find the cutline closest to my target value, which is 0.05 in this case
     targetIndex = np.where(np.abs(targetAxis - cutlineData["cutlineValue"]) <= targetRange)[0][0]
-    
+
     return {
         "contourPlot": {
             "X": X, "Y": Y, "U": U
         },
         "cutlinePlot": {
-            "x_axis": cutline_x_axis, "y_axis": cutline_y_axis[targetIndex], 
-            "cutlineDirection": cutlineData["cutlineDirection"], "cutlineValue": cutlineData["cutlineValue"], 
+            "x_axis": cutline_x_axis, "y_axis": cutline_y_axis[targetIndex],
+            "cutlineDirection": cutlineData["cutlineDirection"], "cutlineValue": cutlineData["cutlineValue"],
             "cutlineColor": cutlineData["color"]
         }
     }
@@ -620,11 +617,11 @@ def get_potential_along_a_1D_cutline(simRunner, t = 0, cutlineDirection = "v", c
     # }
 
 
-    
-    
 
 
-    
+
+
+
 
 contourData = {
     "vmax": None, "vmin": None,
@@ -650,10 +647,10 @@ particleInformation = {
 
 animation_setting = {
     "frame_skip": 10,
-    "save_path": None, 
+    "save_path": None,
     "save_dict": None,
     "interval": 100,
-    "blit": False   
+    "blit": False
 }
 
 protocol_graph_setting = {
@@ -663,36 +660,36 @@ protocol_graph_setting = {
 
 
 
-def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, state_array = None, params = None, legend=True, 
-    plot_axis = [0, 1], slice_values = None, fig_ax=None, 
+def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, state_array = None, params = None, legend=True,
+    plot_axis = [0, 1], slice_values = None, fig_ax=None,
     contourData = contourData, cutlineInformation = cutlineInformation, particleInformation = particleInformation,
-    animation_setting = animation_setting, protocol_graph_setting = protocol_graph_setting, 
+    animation_setting = animation_setting, protocol_graph_setting = protocol_graph_setting,
     ax0_title = None, offset_potential = False, **pot_kwargs):
     """
     This is very similar to the function animate_sim_flux_qubit_with_cutline, but it can project particles onto the cutlines
     """
-    
+
     names = [r"$\varphi_1$", r"$\varphi_2$", r"$\varphi_{1dc}$", r"$\varphi_{2dc}$"]
-    
+
     if not fig_ax:
         fig, ax = plt.subplots(1, 2, figsize=[10, 5])
     else:
         fig, ax = fig_ax
     ax_flatten = ax.flatten()
-    
+
 
     parms_at_init = cfqr.protocol.get_params(0)
     plot_axis = [0, 1]
     print("new animation function")
-    
-    
+
+
     # params_at_all_time = np.array([cfqr.protocol.get_params(_t) for _t in  time_array]).T
     # params_at_all_time_dict = dict(zip(cfqr.protocol_key, params_at_all_time))
     # for key, value in params_at_all_time_dict.items():
     #     if key in protocol_graph_setting['key']:
     #         ax_flatten[2].plot(cfqr.protocol_all_time_array, value, label = key)
     # ax_flatten[2].legend()
-    
+
     if particleInformation['showParticles']:
         N, nsteps, N_dim = np.shape(state_array)[0], np.shape(state_array)[1], np.shape(state_array)[2]
         state_lookup = separate_by_state(state_array[:, :, (0, 1), :])
@@ -715,22 +712,22 @@ def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, st
     _value, _direction, _color = cutlineInformation['cutlineList'][0]
     X, Y, U, cutlineDirection, _targetAxis, _plotAxis = get_potential_along_a_1D_cutline(cfqr, t = time_array[0], cutlineDirection = _direction)
 
-    
+
     ax_flatten[0].set(xlim=phi_1_lim, ylim=phi_2_lim, xlabel=names[plot_axis[0]], ylabel=names[plot_axis[1]])
     ax_flatten[0].set_aspect(1)
-    
-    
+
+
 
 
     def animate(i):
         parms_at_i = cfqr.protocol.get_params(time_array[i])
         ax_flatten[1].clear()
-        
+
         if particleInformation['showParticles']:
             x_i = phi_1[:, i]
             y_i = phi_2[:, i]
             particle_potential_i = cfqr.system.potential.potential(phi_1[:, i], phi_2[:, i], phi_1dc[:, i], phi_2dc[:, i], parms_at_i)
-        
+
             scat_2 = [] # hold the scatter plots of each type of particles
             for key in state_lookup:
                 if key in particleInformation['project_item']:
@@ -738,7 +735,7 @@ def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, st
                 else:
                     _scatter = None
                 scat_2.append(_scatter)
-            
+
         for item in cutlineInformation['cutlineList']:
             _value, _direction, _color = item
 
@@ -747,9 +744,9 @@ def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, st
             plt_line_data_at_t = plotCutlines(X, Y, U, cutlineDirection, cutlineValue = _value,\
                                     contour_plt=ax_flatten[0], cutline_plt=ax_flatten[1], contours = 20,
                                     showGraph=True, cutlineColor = _color, x_range = [-4, 4], cutlineYLimit = cutlineInformation['cutlineYLimit'], offset_potential = offset_potential, contour_range = contourData['contour_range'], time = time_array[i])
-        
-            
-            
+
+
+
         params_at_t_i = cfqr.protocol.get_params(time_array[i])
 
         if particleInformation['showParticles']:
@@ -761,33 +758,33 @@ def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, st
     print(animation_setting['interval'])
     ani = FuncAnimation(fig, animate, interval=animation_setting['interval'], frames=len(time_array), blit=animation_setting['blit'])
     return ani, fig, ax
-    
 
 
-# def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, params = None, legend=True, 
-#     plot_axis = [0, 1], slice_values = None, fig_ax=None, 
+
+# def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, params = None, legend=True,
+#     plot_axis = [0, 1], slice_values = None, fig_ax=None,
 #     contourData = contourData, cutlineInformation = cutlineInformation, particleInformation = particleInformation,
-#     animation_setting = animation_setting, protocol_graph_setting = protocol_graph_setting, 
+#     animation_setting = animation_setting, protocol_graph_setting = protocol_graph_setting,
 #     ax0_title = None, offset_potential = False, **pot_kwargs):
 #     """
 #     This is very similar to the function animate_sim_flux_qubit_with_cutline, but it can project particles onto the cutlines
 #     """
-    
+
 #     names = [r"$\varphi_1$", r"$\varphi_2$", r"$\varphi_{1dc}$", r"$\varphi_{2dc}$"]
-    
+
 #     if not fig_ax:
 #         fig, ax = plt.subplots(1, 2, figsize=[10, 5])
 #     else:
 #         fig, ax = fig_ax
 #     ax_flatten = ax.flatten()
-    
+
 
 
 #     index_skip_in_all_time_array = int(animation_setting['frame_skip']/params['dt'])
 #     time_array = cfqr.protocol_all_time_array[::index_skip_in_all_time_array]
 #     parms_at_init = cfqr.protocol.get_params(0)
 #     plot_axis = [0, 1]
-    
+
 
 #     params_at_all_time = np.array([cfqr.protocol.get_params(_t) for _t in  cfqr.protocol_all_time_array]).T
 #     params_at_all_time_dict = dict(zip(cfqr.protocol_key, params_at_all_time))
@@ -795,7 +792,7 @@ def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, st
 #     #     if key in protocol_graph_setting['key']:
 #     #         ax_flatten[2].plot(cfqr.protocol_all_time_array, value, label = key)
 #     # ax_flatten[2].legend()
-    
+
 #     if particleInformation['showParticles']:
 #         all_state = cfqr.sim.output.all_state['states']
 #         N, nsteps, N_dim = np.shape(all_state)[0], np.shape(all_state)[1], np.shape(all_state)[2]
@@ -819,22 +816,22 @@ def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, st
 #     _value, _direction, _color = cutlineInformation['cutlineList'][0]
 #     X, Y, U, cutlineDirection, _targetAxis, _plotAxis = get_potential_along_a_1D_cutline(cfqr, t = time_array[0], cutlineDirection = _direction)
 
-    
+
 #     ax_flatten[0].set(xlim=phi_1_lim, ylim=phi_2_lim, xlabel=names[plot_axis[0]], ylabel=names[plot_axis[1]])
 #     ax_flatten[0].set_aspect(1)
-    
-    
+
+
 
 
 #     def animate(i):
 #         parms_at_i = cfqr.protocol.get_params(time_array[i])
 #         ax_flatten[1].clear()
-        
+
 #         if particleInformation['showParticles']:
 #             x_i = phi_1[:, i]
 #             y_i = phi_2[:, i]
 #             particle_potential_i = cfqr.system.potential.potential(phi_1[:, i], phi_2[:, i], phi_1dc[:, i], phi_2dc[:, i], parms_at_i)
-        
+
 #             scat_2 = [] # hold the scatter plots of each type of particles
 #             for key in state_lookup:
 #                 if key in particleInformation['project_item']:
@@ -842,7 +839,7 @@ def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, st
 #                 else:
 #                     _scatter = None
 #                 scat_2.append(_scatter)
-            
+
 #         for item in cutlineInformation['cutlineList']:
 #             _value, _direction, _color = item
 
@@ -851,9 +848,9 @@ def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, st
 #             plt_line_data_at_t = plotCutlines(X, Y, U, cutlineDirection, cutlineValue = _value,\
 #                                     contour_plt=ax_flatten[0], cutline_plt=ax_flatten[1], contours = 20,
 #                                     showGraph=True, cutlineColor = _color, x_range = [-4, 4], cutlineYLimit = cutlineInformation['cutlineYLimit'], offset_potential = offset_potential, contour_range = contourData['contour_range'], time = time_array[i])
-        
-            
-            
+
+
+
 #         params_at_t_i = cfqr.protocol.get_params(time_array[i])
 
 #         if particleInformation['showParticles']:
@@ -865,11 +862,11 @@ def animate_sim_flux_qubit_with_cutline_and_projection(cfqr, time_array=None, st
 #     print(animation_setting['interval'])
 #     ani = FuncAnimation(fig, animate, interval=animation_setting['interval'], frames=len(time_array), blit=animation_setting['blit'])
 #     return ani, fig, ax
-    
-    
+
+
 
 def generate_state_at_different_time():
-    
+
     min_U_along_cutline = []
     fig, ax = plt.subplots(5, 4, figsize=[15, 18])
     ax_flatten = ax.flatten()
@@ -910,10 +907,10 @@ def generate_state_at_different_time():
         ax_flatten[2 * _i].set_xticks([-4, 0, 4])
         ax_flatten[2 * _i].set_yticks([-4, 0, 4])
         # ax_flatten[2 * _i + 2].plot(plt_line_data_at_t['cutline_plot']['plotAxis'], plt_line_data_at_t['cutline_plot']['targetU'])
-        
-        
 
-        
+
+
+
 plt_figure_setting = {
     "horizontal_lim": [-4, 4], "vertical_lim": [0, 500], "ax": plt
 }
@@ -962,22 +959,22 @@ def plot_potential_along_a_cutline(cfqr, t = 0, cutlineDirection = "v", cutlineV
     targetIndex = np.where(np.abs(targetAxis - cutlineValue) <= targetRange)[0][0]
 
     targetU = _plotU[targetIndex]
-    
-    
+
+
     plt_figure_setting['ax'].plot(plotAxis, targetU, color = plt_figure_setting['color'], label = plt_figure_setting['label'])
     plt_figure_setting['ax'].set_xlim(plt_figure_setting['horizontal_lim'])
     plt_figure_setting['ax'].set_ylim(plt_figure_setting['vertical_lim'])
     plt_figure_setting['ax'].legend()
 
 
-    
+
 plt_figure_setting = {
     "horizontal_lim": [-4, 4], "vertical_lim": [-6, 6], "ax": plt
 }
 def plot_slope_along_a_cutline(cfqr, t = 0, cutlineDirection = "v", cutlineValue = 0, \
                         resolution = 100, contours = 5, manual_domain = [[-5, -5], [5, 5]], plt_figure_setting = plt_figure_setting):
 
-    
+
     phi_1_dcx_index = protocol_key.index('phi_1_dcx')
     phi_2_dcx_index = protocol_key.index('phi_2_dcx')
     phi_1_dc_i = cfqr.protocol.get_params(t)[phi_1_dcx_index]
@@ -1022,7 +1019,7 @@ def plot_slope_along_a_cutline(cfqr, t = 0, cutlineDirection = "v", cutlineValue
 
     targetSlope = _plotSlope[targetIndex]
     # print(plotAxis.shape, targetSlope.shape)
-    
+
     plt_figure_setting['ax'].plot(plotAxis, targetSlope[:, 1], color = plt_figure_setting['color'], label = plt_figure_setting['label'])
     plt_figure_setting['ax'].set_xlim(plt_figure_setting['horizontal_lim'])
     plt_figure_setting['ax'].set_ylim(plt_figure_setting['vertical_lim'])
