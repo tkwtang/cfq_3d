@@ -115,7 +115,7 @@ def coupled_flux_qubit_3D_non_linear_approx_pot(phi_1, phi_2, phi_3, phi_1dc, ph
     U0_kBT_ratio = U0_1
     U0_2, U0_3 = U0_2 / U0_1, U0_3 / U0_1
     U0_1 = 1
-    xi_123 = 1 / (1 - mu_12**2 - mu_13**2 - mu_23**2 - 2 * mu_12 * mu_13 * mu_23)
+    xi_123 = 1 / (1 - mu_12**2 - mu_13**2 - mu_23**2 + 2 * mu_12 * mu_13 * mu_23)
 
     u_11 = 1/2 * xi_123 * (phi_1 - phi_1x)**2
     u_12 = 1/2 * gamma_1 * (phi_1dc - phi_1xdc)**2
@@ -153,13 +153,13 @@ def coupled_flux_qubit_3D_non_linear_approx_force(phi_1, phi_2, phi_3, phi_1dc, 
     """
     U0_1, U0_2, U0_3, gamma_1, gamma_2, gamma_3, beta_1, beta_2, beta_3, d_beta_1, d_beta_2, d_beta_3, phi_1x, phi_2x, phi_3x, phi_1xdc, phi_2xdc, phi_3xdc, mu_12, mu_13, mu_23 = params
 
-    xi_123 = 1 / (1 - mu_12**2 - mu_13**2 - mu_23**2 - 2 * mu_12 * mu_13 * mu_23)
+    xi_123 = 1 / (1 - mu_12**2 - mu_13**2 - mu_23**2 + 2 * mu_12 * mu_13 * mu_23)
 
 
     U_dp1 =  xi_123 * (phi_1 - phi_1x) + xi_123 * (mu_12 + mu_13 * mu_23) * (phi_2 - phi_2x) + xi_123 * (mu_13 + mu_12 * mu_23) * (phi_3 - phi_3x) - beta_1 * np.sin(phi_1) * np.cos(phi_1dc/2)+  d_beta_1 * np.cos(phi_1) * np.sin(phi_1dc/2)
-    
+
     U_dp2 = xi_123 * (phi_2 - phi_2x) + xi_123 * (mu_12 + mu_13 * mu_23) * (phi_1 - phi_1x) + xi_123 * (mu_23 + mu_12 * mu_13) * (phi_3 - phi_3x) - beta_2 * np.sin(phi_2) * np.cos(phi_2dc/2)+  d_beta_2 * np.cos(phi_2) * np.sin(phi_2dc/2)
-    
+
     U_dp3 = xi_123 * (phi_3 - phi_3x) + xi_123 * (mu_13 + mu_12 * mu_23) * (phi_1 - phi_1x) + xi_123 * (mu_23 + mu_12 * mu_13) * (phi_2 - phi_2x) - beta_3 * np.sin(phi_3) * np.cos(phi_3dc/2)+  d_beta_3 * np.cos(phi_3) * np.sin(phi_3dc/2)
 
     U_dp1dc = gamma_1 * (phi_1dc - phi_1xdc) - 1/2 * beta_1 * np.cos(phi_1) * np.sin(phi_1dc / 2) + 1/2 * d_beta_1 * np.sin(phi_1) * np.cos(phi_1dc/2)
